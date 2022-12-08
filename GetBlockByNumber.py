@@ -1,25 +1,24 @@
+import json
 import os
+import threading
 import time
+from threading import Thread
 from urllib.request import Request, urlopen
 import OpenFile
 
-# http://api-cn.etherscan.com/api?module=proxy&action=eth_getBlockByNumber&tag="+ str(hex(latest_blocknum - i)) +"&boolean=true&apikey=YourApiKeyToken
 latest_block_num = 16138610
 
 # noinspection PyBroadException
 def getMessageFromBlock(block_num):
     result = ""
-    url = "https://api-cn.etherscan.com/api?module=proxy&action=eth_getBlockByNumber&tag="+ str(hex(block_num)) +"&boolean=true&apikey=YourApiKeyToken"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36'}
+    url = "https://api-cn.etherscan.com/api?module=proxy&action=eth_getBlockByNumber&tag="+ str(hex(block_num)) +"&boolean=true&apikey=NSDRFWGWMT6UUDEF44Y4HEF61QRU76WNGM"
+    headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'}
     try:
         req = Request(url, headers=headers)
         response = urlopen(req).read()
-        # result = json.loads(response.decode())
-        result = response.decode()
+        result = json.loads(response.decode())
     except Exception:
-        print("API Limit, retrying \n")
-        time.sleep(1)
-    print("downloading " + str(block_num) + " block data")
+        print(Exception)
     return result
 
 
@@ -30,17 +29,35 @@ def readLastBlockNum():
         # 表示要从最新区块号开始爬取
         last_block_num = latest_block_num + 1 # 后面会从last_block_num - 1开始爬取
     else:
+        # 否则从编号最小的块继续爬取
         block_list.sort(key=lambda x: x[:-5])
         last_block_num = int(block_list[0][:-5])
 
     return last_block_num
 
-def main():
+
+def ScapyBlockData():
     last_block_num = readLastBlockNum()
+
     while True:
         last_block_num -= 1
         data = getMessageFromBlock(last_block_num)
-        OpenFile.writeFile("block_data/" + str(last_block_num) + ".json", data)
+
+        if 'status' in data :
+            print("API Limit, retrying")
+            time.sleep(1)
+            last_block_num += 1
+            continue
+
+        print("downloading " + str(last_block_num) + " block data")
+        OpenFile.writeFile("block_data/" + str(last_block_num) + ".json", json.dumps(data))
+
+
+def main():
+
+    thread_scapy_data = Thread(target=ScapyBlockData())
+    thread_scapy_data.start()
+
 
 
 if __name__ == "__main__":
