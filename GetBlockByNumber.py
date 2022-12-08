@@ -1,12 +1,10 @@
 import json
 import os
-import threading
 import time
-from threading import Thread
 from urllib.request import Request, urlopen
 import OpenFile
 
-latest_block_num = 16138610
+latest_block_num = 16138610 # 2022.12.8
 
 # noinspection PyBroadException
 def getMessageFromBlock(block_num):
@@ -43,7 +41,7 @@ def ScapyBlockData():
         last_block_num -= 1
         data = getMessageFromBlock(last_block_num)
 
-        if 'status' in data :
+        if 'status' in data : # 此处可优化
             print("API Limit, retrying")
             time.sleep(1)
             last_block_num += 1
@@ -53,12 +51,3 @@ def ScapyBlockData():
         OpenFile.writeFile("block_data/" + str(last_block_num) + ".json", json.dumps(data))
 
 
-def main():
-
-    thread_scapy_data = Thread(target=ScapyBlockData())
-    thread_scapy_data.start()
-
-
-
-if __name__ == "__main__":
-    main()
