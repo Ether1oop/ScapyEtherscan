@@ -91,6 +91,7 @@ def scapyTransactionCode():
                 continue
             else:
                 if data['result'][0]['ABI'] == "Contract source code not verified" or data['result'][0]['SourceCode'] == "":
+                    os.remove("inputs/" + address + ".txt")
                     print("Contract source code not verified")
                     continue
         else:
